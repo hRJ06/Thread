@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import Thread from "../models/thread.model";
 import User from "../models/user.model";
 import { connectToDB } from "../mongoose"
+import Community from "../models/community.model";
 
 interface Params {
     text: string,
@@ -13,27 +14,37 @@ interface Params {
 export async function createThread({text, author, communityId, path}: Params) {
     try {
         connectToDB();
-        const thread = await Thread.create({
-            text,author,community: null,
-
+        const communityIdObject = await Community.findOne(
+          { id: communityId },
+          { _id: 1 }
+        );
+        const createdThread = await Thread.create({
+            text,
+            author,
+            community: communityIdObject, 
         });
         await User.findByIdAndUpdate(author, {
-            $push: {
-                threads: thread._id
-            }
-        })
+          $push: { threads: createdThread._id },
+        });
+    
+        if(communityIdObject) {
+          await Community.findByIdAndUpdate(communityIdObject, {
+            $push: { threads: createdThread._id },
+          });
+        }
         revalidatePath("/");
-    }
-    catch (err : any) {
-        throw new Error(`Failed to create thread: ${err.message}`);
+    } 
+    catch (error: any) {
+        throw new Error(`Failed to create thread: ${error.message}`);
     }
 }
+
 
 export async function fetchThreads(pageNumber = 1, pageSize = 20) {
     try {
         connectToDB();
         const page = (pageNumber - 1) * pageSize;
-        const threads = await Thread.find({parentId: { $in: [null, undefined]}}).sort({ createdAt: 'desc'}).skip(page).limit(pageSize).populate({path: 'author', model: User}).populate({
+        const threads = await Thread.find({parentId: { $in: [null, undefined]}}).sort({ createdAt: 'desc'}).skip(page).limit(pageSize).populate({path: 'author', model: User}).populate({path: "community", model: Community}).populate({
             path: 'children',
             populate: {
                 path: 'author',

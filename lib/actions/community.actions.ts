@@ -63,7 +63,7 @@ export async function fetchCommunityDetails(id: string) {
   }
 }
 
-export async function fetchCommunityPosts(id: string) {
+export async function fetchCommunityThreads(id: string) {
   try {
     connectToDB();
 
@@ -85,6 +85,10 @@ export async function fetchCommunityPosts(id: string) {
             select: "image _id", 
           },
         },
+        {
+          path: "community",
+          model: Community,
+        }
       ],
     });
 

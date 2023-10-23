@@ -4,6 +4,7 @@ import User from "../models/user.model";
 import { connectToDB } from "../mongoose"
 import Thread from "../models/thread.model";
 import { FilterQuery, SortOrder } from "mongoose";
+import Community from "../models/community.model";
 
 interface Params {
     userId: string
@@ -44,25 +45,34 @@ export async function fetchUser(userId: string) {
 
 export async function fetchUserThreads(userId: string) {
     try {
-        const threads = await User.findOne({id: userId}).populate({
-            path: 'threads',
+      connectToDB();
+
+      const threads = await User.findOne({ id: userId }).populate({
+        path: "threads",
+        model: Thread,
+        populate: [
+          {
+            path: "community",
+            model: Community,
+            select: "name id image _id", 
+          },
+          {
+            path: "children",
             model: Thread,
             populate: {
-                path: 'children',
-                model: Thread,
-                populate: {
-                    path: 'author',
-                    model: User,
-                    select: 'name image id'
-                }
-            }
-        });
-        return threads;
+              path: "author",
+              model: User,
+              select: "name image id", 
+            },
+          },
+        ],
+      });
+      return threads;
+    } catch (error) {
+      console.error("Error fetching user threads:", error);
+      throw error;
     }
-    catch (err: any) {
-        throw new Error(`Failed to fetch user threads: ${err.message}`)
-    }
-}
+  }
 
 export async function fetchUsers({userId, searchString = "", pageNumber = 1, pageSize = 20, sortBy = "desc"}: {userId: string; searchString?:string; pageNumber?:number; pageSize?:number; sortBy?:SortOrder}) {
     try {

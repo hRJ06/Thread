@@ -9,9 +9,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import { createThread } from "@/lib/actions/thread.actions";
+import { useOrganization } from "@clerk/nextjs";
 function PostThread({userId}: {userId: any}) {
     const router = useRouter();
     const pathName = usePathname();
+    const { organization } = useOrganization();
     const form = useForm<z.infer<typeof Threadvalidation>>({
         resolver: zodResolver(Threadvalidation),
         defaultValues: {
@@ -20,7 +22,7 @@ function PostThread({userId}: {userId: any}) {
         }
     })
     const onSubmit = async(values: z.infer<typeof Threadvalidation>) => {
-        await createThread({text: values.thread, author: userId, communityId: null, path: pathName});
+        await createThread({text: values.thread, author: userId, communityId: organization ? organization.id : null, path: pathName});
     }
     return (
        <Form {...form}>
