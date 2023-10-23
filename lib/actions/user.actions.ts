@@ -5,6 +5,7 @@ import { connectToDB } from "../mongoose"
 import Thread from "../models/thread.model";
 import { FilterQuery, SortOrder } from "mongoose";
 import Community from "../models/community.model";
+import { currentUser } from "@clerk/nextjs";
 
 interface Params {
     userId: string
@@ -15,6 +16,8 @@ interface Params {
     path: string
 }
 export async function updateUser({userId, username, name, bio, image, path}: Params) : Promise<void> {
+    const user = await currentUser();
+    if(!user) return
     connectToDB();
     try {
         await User.findOneAndUpdate({ id: userId}, {
@@ -24,9 +27,7 @@ export async function updateUser({userId, username, name, bio, image, path}: Par
             image,
             onboarded: true,
         }, {upsert: true});
-        if(path === '/profile/edit') {
-            revalidatePath(path);
-        }
+        revalidatePath(`/profile/${user.id}`);
     }
     catch (err: any) {
         throw new Error(`Failed to create/update user: ${err.message}`);
