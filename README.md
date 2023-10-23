@@ -79,7 +79,7 @@ If you add or modify features, update the project's documentation, including the
 
 ## LIVE LINK
 
-You can access the live version of **Thread** [here](https://your-live-link.com).
+You can access the live version of **Thread** [here](https://thread-app-plum.vercel.app/).
 
 ## LICENSE
 
